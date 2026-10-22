@@ -3,6 +3,7 @@
 import {useState} from 'react';
 import type React from 'react';
 import {useTheme} from '@/contexts/ThemeContext';
+import {roster} from '@/lib/roster';
 
 export default function Header(): React.JSX.Element {
   const [showInfo, setShowInfo] = useState(false);
@@ -92,6 +93,12 @@ export default function Header(): React.JSX.Element {
                     (Prophet) of The Church of Jesus Christ of Latter-Day Saints
                     on any given date over the next 30 years.
                   </p>
+                  <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mt-4">
+                    The grey line, &ldquo;A future apostle,&rdquo; is the
+                    probability that every current apostle has passed away by
+                    then, so the President is someone not yet called as an
+                    apostle.
+                  </p>
                 </section>
 
                 <section>
@@ -102,12 +109,13 @@ export default function Header(): React.JSX.Element {
                     An apostle becomes President when:
                   </p>
                   <ol className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-decimal">
-                    <li>All apostles ordained before them have passed away</li>
+                    <li>All apostles senior to them have passed away</li>
                     <li>They are still living</li>
                   </ol>
                   <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mt-4">
                     For each apostle, we calculate the probability of both
-                    conditions being met for each day over the next 30 years.
+                    conditions being met on dates 90 days apart over the next 30
+                    years.
                   </p>
                 </section>
 
@@ -126,7 +134,8 @@ export default function Header(): React.JSX.Element {
                     </li>
                     <li>
                       <strong>Mortality data:</strong> Social Security
-                      Administration actuarial tables for U.S. males
+                      Administration 2023 period life table for U.S. males, from
+                      the 2026 Trustees Report
                     </li>
                   </ul>
                 </section>
@@ -136,10 +145,19 @@ export default function Header(): React.JSX.Element {
                     Key Assumptions
                   </h3>
                   <ul className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-disc">
-                    <li>Succession follows seniority by ordination date</li>
+                    <li>
+                      Succession follows apostolic seniority, the order in which
+                      the apostles were ordained
+                    </li>
                     <li>No early resignations or unforeseen circumstances</li>
                     <li>
-                      Individual health follows average mortality patterns
+                      Apostles die at lower rates than U.S. men their age. The
+                      gap is widest in their 60s and 70s and closes by about age
+                      98, which fits their record: from 1995 to 2026, 14
+                      apostles died where U.S. rates would predict about 31
+                    </li>
+                    <li>
+                      Each apostle&apos;s death is independent of the others
                     </li>
                   </ul>
                 </section>
@@ -160,10 +178,12 @@ export default function Header(): React.JSX.Element {
 
                 <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
                   <p className="text-sm text-gray-500 dark:text-slate-400">
-                    Last updated:{' '}
-                    {new Date().toLocaleDateString('en-US', {
+                    Apostle list as of{' '}
+                    {roster.asOf.toLocaleDateString('en-US', {
                       month: 'long',
+                      day: 'numeric',
                       year: 'numeric',
+                      timeZone: 'UTC',
                     })}
                   </p>
                 </div>

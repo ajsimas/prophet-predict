@@ -1,57 +1,21 @@
-import {graphDataType, graphDataPointType} from '@/types';
+import {coloredGraphDataType, graphDataPointType, hoverDataType} from '@/types';
 import {format} from 'd3-format';
 import type React from 'react';
-
-type HoverData = {
-  date: string;
-  points: Array<{
-    id: string;
-    serieColor: string;
-    data: graphDataPointType;
-  }>;
-} | null;
 
 export default function MobileLegend({
   data,
   hoverData,
 }: {
-  data: graphDataType[];
-  hoverData: HoverData;
+  data: coloredGraphDataType[];
+  hoverData: hoverDataType;
 }): React.JSX.Element {
-  const colors = [
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
-    '#aec7e8',
-    '#ffbb78',
-    '#98df8a',
-    '#ff9896',
-  ];
-
-  // If hovering, sort by probability (highest first), otherwise by ordination date
+  // If hovering, list by probability on that date (LineGraph sorts the
+  // points), otherwise by seniority
   const displayData = hoverData
-    ? hoverData.points.sort((a, b) => Number(b.data.y) - Number(a.data.y))
-    : [...data]
-        .sort(
-          (a, b) =>
-            new Date(a.ordinationDate).getTime() -
-            new Date(b.ordinationDate).getTime()
-        )
-        .map((item) => {
-          const originalIndex = data.findIndex((d) => d.id === item.id);
-          return {
-            id: item.id,
-            serieColor: colors[originalIndex % colors.length],
-            data: null,
-          };
-        });
+    ? hoverData.points
+    : data.map((series) => ({id: series.id, data: null}));
+  // Fill two columns, top to bottom
+  const rows = Math.ceil(displayData.length / 2);
 
   return (
     <div className="p-3 bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 md:hidden">
@@ -67,11 +31,10 @@ export default function MobileLegend({
           </span>
         )}
       </h3>
-      <div className="grid grid-flow-col grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-3 auto-rows-auto" style={{gridTemplateRows: 'repeat(7, auto)'}}>
+      <div className="grid grid-flow-col grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-3 auto-rows-auto" style={{gridTemplateRows: `repeat(${rows}, auto)`}}>
         {displayData.map((item) => {
-          // Find the original index to get the correct color
-          const originalIndex = data.findIndex((d) => d.id === item.id);
-          const color = colors[originalIndex % colors.length];
+          // Same color as the apostle's line in the chart
+          const color = data.find((series) => series.id === item.id)?.color;
           const pointData = item.data as graphDataPointType | null;
 
           return (
@@ -79,7 +42,7 @@ export default function MobileLegend({
               <div
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{
-                  backgroundColor: item.serieColor || color,
+                  backgroundColor: color,
                 }}
               />
               <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -88,7 +51,10 @@ export default function MobileLegend({
                 </div>
                 <div className="text-[9px] text-gray-500 dark:text-slate-400 tabular-nums leading-tight h-[11px]">
                   {pointData ? (
-                    <>{pointData.age}y · {format('.1%')(Number(pointData.y))}</>
+                    <>
+                      {pointData.age !== null && <>{pointData.age}y · </>}
+                      {format('.1%')(Number(pointData.y))}
+                    </>
                   ) : (
                     <>&nbsp;</>
                   )}
