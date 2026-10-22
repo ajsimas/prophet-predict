@@ -13,10 +13,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({children}: {children: React.ReactNode}) {
   const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     // Get theme from localStorage or system preference
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     if (savedTheme) {
@@ -54,11 +52,8 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
     updateThemeColor(newTheme);
   };
 
-  // Prevent flash of unstyled content
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Always render the provider: switching from a bare fragment to it after
+  // mounting would remount the whole page and fetch the forecast twice.
   return (
     <ThemeContext.Provider value={{theme, toggleTheme}}>
       {children}
