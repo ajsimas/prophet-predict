@@ -1,12 +1,12 @@
 'use client';
 
-import {useState} from 'react';
+import {useRef} from 'react';
 import type React from 'react';
 import {useTheme} from '@/contexts/ThemeContext';
 import {roster} from '@/lib/roster';
 
 export default function Header(): React.JSX.Element {
-  const [showInfo, setShowInfo] = useState(false);
+  const aboutRef = useRef<HTMLDialogElement>(null);
   const {theme, toggleTheme} = useTheme();
 
   return (
@@ -25,7 +25,11 @@ export default function Header(): React.JSX.Element {
             <button
               className="bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md p-2 flex items-center justify-center cursor-pointer text-gray-700 dark:text-slate-300 transition-all duration-200 hover:bg-gray-200 dark:hover:bg-slate-700 hover:border-gray-400 dark:hover:border-slate-500 active:bg-gray-300 dark:active:bg-slate-600"
               onClick={toggleTheme}
-              aria-label="Toggle theme"
+              aria-label={
+                theme === 'light'
+                  ? 'Switch to dark theme'
+                  : 'Switch to light theme'
+              }
             >
               {theme === 'light' ? (
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
@@ -43,8 +47,9 @@ export default function Header(): React.JSX.Element {
             </button>
             <button
               className="bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md px-3 py-2 md:px-4 md:py-2 flex items-center gap-1.5 cursor-pointer text-gray-700 dark:text-slate-300 text-sm md:text-sm font-medium transition-all duration-200 hover:bg-gray-200 dark:hover:bg-slate-700 hover:border-gray-400 dark:hover:border-slate-500 active:bg-gray-300 dark:active:bg-slate-600"
-              onClick={() => setShowInfo(!showInfo)}
-              aria-label="Show methodology information"
+              onClick={() => aboutRef.current?.showModal()}
+              aria-label="About this forecast"
+              aria-haspopup="dialog"
             >
               <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
                 <path
@@ -59,139 +64,143 @@ export default function Header(): React.JSX.Element {
         </div>
       </header>
 
-      {showInfo && (
-        <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center p-8 md:p-4 bg-black/50 backdrop-blur-xs animate-fadeIn"
-          onClick={() => setShowInfo(false)}
-        >
-          <div
-            className="relative w-full max-w-[650px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-4rem)] md:max-h-[calc(100vh-2rem)] animate-fadeInSlow md:animate-slideUp"
-            onClick={(e) => e.stopPropagation()}
-          >
+      {/* A native modal dialog moves focus into itself, keeps it there, and
+          closes on Escape. A click on the backdrop lands on the dialog
+          element itself, since the content fills it. */}
+      <dialog
+        ref={aboutRef}
+        aria-labelledby="about-title"
+        className="m-auto w-[calc(100%-2rem)] max-w-[650px] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white dark:bg-slate-800 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-xs motion-safe:open:animate-fadeInSlow"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) e.currentTarget.close();
+        }}
+      >
+        <div className="px-5 pb-6 md:px-8 md:pb-8">
+          <div className="sticky top-0 z-10 -mx-5 md:-mx-8 mb-4 flex items-start justify-between gap-4 bg-white dark:bg-slate-800 px-5 pt-5 pb-2 md:px-8 md:pt-8">
+            <h2
+              id="about-title"
+              className="text-2xl font-bold text-gray-900 dark:text-slate-100"
+            >
+              How This Works
+            </h2>
             <button
-              className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center text-gray-400 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors cursor-pointer z-10"
-              onClick={() => setShowInfo(false)}
+              className="-mr-3 -mt-2 w-12 h-12 flex flex-shrink-0 items-center justify-center rounded-md text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              onClick={() => aboutRef.current?.close()}
               aria-label="Close"
             >
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          </div>
 
-            <div className="overflow-y-auto p-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6 pr-10">
-                How This Works
-              </h2>
+          <div className="space-y-6">
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
+                What This Calculates
+              </h3>
+              <p className="text-base text-gray-700 dark:text-slate-300 leading-normal">
+                The probability that each apostle will serve as President
+                (Prophet) of The Church of Jesus Christ of Latter-Day Saints
+                on any given date over the next 30 years.
+              </p>
+              <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mt-4">
+                The grey line, &ldquo;A future apostle,&rdquo; is the
+                probability that every current apostle has passed away by
+                then, so the President is someone not yet called as an
+                apostle.
+              </p>
+            </section>
 
-              <div className="space-y-6">
-                <section>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
-                    What This Calculates
-                  </h3>
-                  <p className="text-base text-gray-700 dark:text-slate-300 leading-normal">
-                    The probability that each apostle will serve as President
-                    (Prophet) of The Church of Jesus Christ of Latter-Day Saints
-                    on any given date over the next 30 years.
-                  </p>
-                  <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mt-4">
-                    The grey line, &ldquo;A future apostle,&rdquo; is the
-                    probability that every current apostle has passed away by
-                    then, so the President is someone not yet called as an
-                    apostle.
-                  </p>
-                </section>
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
+                How It Works
+              </h3>
+              <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mb-4">
+                An apostle becomes President when:
+              </p>
+              <ol className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-decimal">
+                <li>All apostles senior to them have passed away</li>
+                <li>They are still living</li>
+              </ol>
+              <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mt-4">
+                For each apostle, we calculate the probability of both
+                conditions being met on dates 90 days apart over the next 30
+                years.
+              </p>
+            </section>
 
-                <section>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
-                    How It Works
-                  </h3>
-                  <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mb-4">
-                    An apostle becomes President when:
-                  </p>
-                  <ol className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-decimal">
-                    <li>All apostles senior to them have passed away</li>
-                    <li>They are still living</li>
-                  </ol>
-                  <p className="text-base text-gray-700 dark:text-slate-300 leading-normal mt-4">
-                    For each apostle, we calculate the probability of both
-                    conditions being met on dates 90 days apart over the next 30
-                    years.
-                  </p>
-                </section>
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
+                Data Sources
+              </h3>
+              <ul className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-disc">
+                <li>
+                  <strong>Ordination dates:</strong> Publicly available
+                  church records
+                </li>
+                <li>
+                  <strong>Birth dates:</strong> Publicly available church
+                  records
+                </li>
+                <li>
+                  <strong>Mortality data:</strong> Social Security
+                  Administration 2023 period life table for U.S. males, from
+                  the 2026 Trustees Report
+                </li>
+              </ul>
+            </section>
 
-                <section>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
-                    Data Sources
-                  </h3>
-                  <ul className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-disc">
-                    <li>
-                      <strong>Ordination dates:</strong> Publicly available
-                      church records
-                    </li>
-                    <li>
-                      <strong>Birth dates:</strong> Publicly available church
-                      records
-                    </li>
-                    <li>
-                      <strong>Mortality data:</strong> Social Security
-                      Administration 2023 period life table for U.S. males, from
-                      the 2026 Trustees Report
-                    </li>
-                  </ul>
-                </section>
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
+                Key Assumptions
+              </h3>
+              <ul className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-disc">
+                <li>
+                  Succession follows apostolic seniority, the order in which
+                  the apostles were ordained
+                </li>
+                <li>No early resignations or unforeseen circumstances</li>
+                <li>
+                  Apostles die at lower rates than U.S. men their age. The
+                  gap is widest in their 60s and 70s and closes by about age
+                  98, which fits their record: from 1995 to 2026, 14
+                  apostles died where U.S. rates would predict about 31
+                </li>
+                <li>
+                  Each apostle&apos;s death is independent of the others
+                </li>
+              </ul>
+            </section>
 
-                <section>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
-                    Key Assumptions
-                  </h3>
-                  <ul className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-disc">
-                    <li>
-                      Succession follows apostolic seniority, the order in which
-                      the apostles were ordained
-                    </li>
-                    <li>No early resignations or unforeseen circumstances</li>
-                    <li>
-                      Apostles die at lower rates than U.S. men their age. The
-                      gap is widest in their 60s and 70s and closes by about age
-                      98, which fits their record: from 1995 to 2026, 14
-                      apostles died where U.S. rates would predict about 31
-                    </li>
-                    <li>
-                      Each apostle&apos;s death is independent of the others
-                    </li>
-                  </ul>
-                </section>
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
+                Limitations
+              </h3>
+              <ul className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-disc">
+                <li>
+                  Statistical model cannot account for individual health
+                  conditions
+                </li>
+                <li>Shows probabilities, not predictions</li>
+                <li>Cannot predict unforeseen circumstances</li>
+              </ul>
+            </section>
 
-                <section>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">
-                    Limitations
-                  </h3>
-                  <ul className="text-base text-gray-700 dark:text-slate-300 leading-normal space-y-2 ml-6 list-disc">
-                    <li>
-                      Statistical model cannot account for individual health
-                      conditions
-                    </li>
-                    <li>Shows probabilities, not predictions</li>
-                    <li>Cannot predict unforeseen circumstances</li>
-                  </ul>
-                </section>
-
-                <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
-                  <p className="text-sm text-gray-500 dark:text-slate-400">
-                    Apostle list as of{' '}
-                    {roster.asOf.toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                      timeZone: 'UTC',
-                    })}
-                  </p>
-                </div>
-              </div>
+            <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
+                Apostle list as of{' '}
+                {roster.asOf.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                  timeZone: 'UTC',
+                })}
+              </p>
             </div>
           </div>
         </div>
-      )}
+      </dialog>
     </>
   );
 }

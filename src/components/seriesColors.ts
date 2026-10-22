@@ -1,31 +1,47 @@
 import {graphDataType, coloredGraphDataType} from '@/types';
 
-// One color per apostle by seniority, shared by the chart and both legends.
-const APOSTLE_COLORS = [
-  '#1f77b4',
-  '#ff7f0e',
-  '#2ca02c',
-  '#d62728',
-  '#9467bd',
-  '#8c564b',
-  '#e377c2',
-  '#bcbd22',
-  '#17becf',
-  '#aec7e8',
-  '#ffbb78',
-  '#98df8a',
-  '#ff9896',
-  '#c5b0d5',
-  '#c49c94',
-];
-const FUTURE_APOSTLE_COLOR = '#7f7f7f';
+type Theme = 'light' | 'dark';
 
-export function colorSeries(data: graphDataType[]): coloredGraphDataType[] {
-  return data.map((series) => ({
-    ...series,
-    color:
+// Sixteen lines can't be told apart by color, so only the three apostles next
+// in line after the President, the likely successors, get a color of their
+// own. Everyone else is gray and named by the label on their line. Each set
+// passes the data-viz palette checks (contrast and color blindness) on its
+// theme's chart background.
+const SUCCESSOR_COLORS: Record<Theme, readonly string[]> = {
+  light: ['#2a78d6', '#eb6834', '#1baf7a'],
+  dark: ['#3987e5', '#d95926', '#199e70'],
+};
+const APOSTLE_COLOR: Record<Theme, string> = {
+  light: '#a1a7af',
+  dark: '#646b75',
+};
+const FUTURE_APOSTLE_COLOR: Record<Theme, string> = {
+  light: '#c9cdd3',
+  dark: '#3f454d',
+};
+// A highlighted gray line is drawn in the text color instead.
+export const HIGHLIGHT_COLOR: Record<Theme, string> = {
+  light: '#1f2937',
+  dark: '#f1f5f9',
+};
+
+export function colorSeries(
+  data: graphDataType[],
+  theme: Theme
+): coloredGraphDataType[] {
+  return data.map((series) => {
+    const successor =
       series.seniority === null
-        ? FUTURE_APOSTLE_COLOR
-        : APOSTLE_COLORS[(series.seniority - 1) % APOSTLE_COLORS.length],
-  }));
+        ? undefined
+        : SUCCESSOR_COLORS[theme][series.seniority - 2];
+    return {
+      ...series,
+      featured: successor !== undefined,
+      color:
+        successor ??
+        (series.seniority === null
+          ? FUTURE_APOSTLE_COLOR[theme]
+          : APOSTLE_COLOR[theme]),
+    };
+  });
 }

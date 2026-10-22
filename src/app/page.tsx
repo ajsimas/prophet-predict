@@ -29,12 +29,14 @@ export default function Home(): React.JSX.Element {
   if (isLoading) return <LoadingSpinner />;
   if (!results) return <div className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-900 p-4">Error loading data</div>;
 
+  // The page scrolls whenever the window is too short for the chart. On wide
+  // screens it fills the window, with the chart and the legend side by side.
   return (
-    <div className="p-0 m-0 h-screen flex flex-col bg-white dark:bg-slate-900">
+    <div className="flex min-h-dvh flex-col bg-white dark:bg-slate-900 lg:h-dvh lg:min-h-[560px]">
       <Header />
-      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto md:overflow-hidden">
+      <main className="flex flex-1 flex-col lg:min-h-0">
         <LineGraph data={results} />
-      </div>
+      </main>
     </div>
   );
 }
