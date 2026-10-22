@@ -1,12 +1,13 @@
 import {ResponsiveLine} from '@nivo/line';
 import {timeYear} from 'd3-time';
 import {timeFormat} from 'd3-time-format';
-import {graphDataType, graphDataPointType} from '@/types';
+import {graphDataType, graphDataPointType, hoverDataType} from '@/types';
 import {useState, useEffect, useCallback} from 'react';
 import type React from 'react';
 import {useTheme} from '@/contexts/ThemeContext';
 import DesktopLegend from './DesktopLegend';
 import MobileLegend from './MobileLegend';
+import {colorSeries} from './seriesColors';
 
 export default function LineGraph({
   data,
@@ -16,14 +17,7 @@ export default function LineGraph({
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const {theme} = useTheme();
-  const [hoveredSlice, setHoveredSlice] = useState<{
-    date: string;
-    points: Array<{
-      id: string;
-      serieColor: string;
-      data: graphDataPointType;
-    }>;
-  } | null>(null);
+  const [hoveredSlice, setHoveredSlice] = useState<hoverDataType>(null);
 
   const handleSliceHover = useCallback((slice: any) => {
     // Sort points by probability (highest first)
@@ -35,7 +29,6 @@ export default function LineGraph({
       date: String(slice.points[0].data.x),
       points: sortedPoints.map((point: any) => ({
         id: String(point.seriesId),
-        serieColor: point.seriesColor,
         data: point.data as graphDataPointType,
       })),
     };
@@ -62,27 +55,24 @@ export default function LineGraph({
   if (!data) return <></>;
   if (!data[0]) return <></>;
 
-  // Sort data by ordination date (oldest/longest serving first)
-  // Reversed for nivo legend which displays bottom-to-top
-  const sortedData = [...data].sort(
-    (a, b) =>
-      new Date(b.ordinationDate).getTime() -
-      new Date(a.ordinationDate).getTime()
-  );
+  // Series arrive most senior first. Nivo draws the first series on top, so
+  // the senior apostles' lines sit above the juniors' and the grey line for a
+  // future apostle sits at the bottom.
+  const series = colorSeries(data);
 
   const timeYearResult = timeYear.every(1);
   if (!timeYearResult?.range) return <></>;
   const tickValuesAxisBottom = timeYearResult.range(
-    new Date(sortedData[0].data[0].x),
-    new Date(sortedData[0].data[sortedData[0].data.length - 1].x)
+    new Date(series[0].data[0].x),
+    new Date(series[0].data[series[0].data.length - 1].x)
   );
 
   return (
     <div className="flex flex-col h-full w-full">
       <div className="w-full h-[50vh] md:flex-1 md:min-h-[250px] lg:min-h-[500px] lg:min-w-[800px] relative">
-        <DesktopLegend data={data} hoverData={hoveredSlice} />
+        <DesktopLegend data={series} hoverData={hoveredSlice} />
         <ResponsiveLine
-          data={sortedData}
+          data={series}
           margin={
             isMobile
               ? {top: 10, right: 10, bottom: 40, left: 40}
@@ -125,7 +115,7 @@ export default function LineGraph({
             legendPosition: 'middle',
           }}
           enableGridX={false}
-          colors={{scheme: 'category10'}}
+          colors={{datum: 'color'}}
           lineWidth={isMobile ? 2 : 1}
           enablePoints={false}
           pointSize={4}
@@ -178,7 +168,7 @@ export default function LineGraph({
           }}
         />
       </div>
-      <MobileLegend data={data} hoverData={hoveredSlice} />
+      <MobileLegend data={series} hoverData={hoveredSlice} />
     </div>
   );
 }
